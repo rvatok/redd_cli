@@ -1,30 +1,30 @@
 import pytest
 import requests
 
+import sys
+sys.path.append("../..")
+
 from reddit import app
 from reddit import settings
 from reddit.api import *
-name = None
-limit = 1
 
-@pytest.fixture(scope="module")
-def mock_subreddit_list():
-    fake_subreddit = search_subreddits(limit=None)
-    fake_subreddit.resp = {"Key1":"value1","Key4":"omg","Key2":"value2","Key3":"value3"}
-    return fake_subreddit.resp
+def mock_api_call(q, params, headers):
+    if q == "subreddits/search":
+        if params["q"] == "funny":
+            return {"data": range(10)}
 
-@pytest.fixture(scope="module")
-def search_subreddit():
-    resp = {"Key1":"value1","Key4":"omg","Key2":"value2","Key3":"value3"}
-    return resp
+    return "Some"
+
+@pytest.fixture(autouse=True)
+def no_requests(monkeypatch):
+    monkeypatch.setattr(requests, "get", mock_api_call)
 
 def test_search_subreddit():
-    query = "value1"
-    my_fake_list = mock_subreddit_list()
-    assert query in my_fake_list, "My query {0} is not found".format(query)
+    search_subreddits("funny", 10)
 
 def test_search_subreddit(search_subreddit):
     assert search_subreddit()["Key4"] == "omg"
 
 def test_get_comments():
+    import pdb; pdb.set_trace()
     pass
